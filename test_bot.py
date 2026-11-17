@@ -20,9 +20,13 @@ class Tests(unittest.TestCase):
                     self.assertLess(profit(floor - 1, cost, *args), 200)
 
     def test_stale(self):
-        import json
-        from pathlib import Path
-        config = json.loads(Path(__file__).with_name('config.json').read_text())
+        config = {
+            'extra': 25, 'fees': [.1, .2], 'withdrawal': .06,
+            'withdrawal_minimum': 60, 'withdrawal_batch': 1,
+            'products': [{'id': 'test', 'name': 'Test', 'purchase': 100,
+                          'target_profit': 50,
+                          'urls': ['https://playerok.com/products/test']}]
+        }
         state = {}
         report(config, state, lambda url: 1999)
         def blocked(url):
