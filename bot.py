@@ -144,7 +144,10 @@ def send(text):
 
 
 def main():
-    config = json.loads((ROOT / 'config.json').read_text())
+    raw_config = os.environ.get('BOT_CONFIG_JSON')
+    if not raw_config:
+        raise RuntimeError('Добавьте секрет BOT_CONFIG_JSON в GitHub Actions')
+    config = json.loads(raw_config)
     path = ROOT / 'state.json'
     state = json.loads(path.read_text()) if path.exists() else {}
     text = report(config, state)
