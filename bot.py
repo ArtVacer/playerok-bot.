@@ -150,7 +150,10 @@ def main():
     config = json.loads(raw_config)
     path = ROOT / 'state.json'
     state = json.loads(path.read_text()) if path.exists() else {}
+    started_at = datetime.now(timezone.utc).isoformat(timespec='seconds')
     text = report(config, state)
+    fresh = [item for item in state.values() if item.get('at', '') >= started_at]
+    print(f'Fresh products: {len(fresh)}/{len(config["products"])}; fresh offers: {sum(len(item["offers"]) for item in fresh)}', flush=True)
     send(text)
     temporary = path.with_suffix('.tmp')
     temporary.write_text(json.dumps(state, ensure_ascii=False, indent=2))
