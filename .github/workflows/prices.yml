@@ -1,5 +1,8 @@
 name: Hourly subscription prices
 on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/prices.yml']
   schedule:
     - cron: '17 * * * *'
   workflow_dispatch:
