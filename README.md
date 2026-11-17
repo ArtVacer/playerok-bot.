@@ -1,27 +1,21 @@
-# Telegram-монитор подписок Playerok
+# Playerok subscription monitor
 
-Скрипт отправляет почасовую сводку в один Telegram-чат. Настроены шесть продуктов и 15 карточек конкурентов. Это монитор цен предложения. Данных о числе реальных продаж у него нет. Максимум и минимум относятся к настроенной выборке. Новые объявления автоматически не обнаруживаются.
+Hourly Telegram reports for configured subscription listings. Schedule: minute 17 of every hour (GitHub may delay runs).
 
-## Бесплатный запуск через GitHub Actions
+## Setup
 
-1. Создайте репозиторий GitHub и загрузите содержимое этой папки, включая .github/workflows/prices.yml. Для публичного репозитория стандартные runners бесплатны. Закупочные цены в публичном config.json будут видны всем. Для приватного репозитория действуют квоты вашего тарифа.
-2. В Settings → Secrets and variables → Actions создайте TELEGRAM_BOT_TOKEN (токен BotFather) и TELEGRAM_CHAT_ID (ID своего чата). Токен храните только в Secrets.
-3. Откройте бота в Telegram и нажмите Start. Для получения chat ID запустите локально `python setup_chat.py`, задав переменную окружения TELEGRAM_BOT_TOKEN. Команда выводит доступные личные чаты, не отправляет им сообщения.
-4. В Actions выберите Hourly subscription prices → Run workflow. Проверьте доставку отчёта.
-5. Расписание запускается на 17-й минуте каждого часа UTC. GitHub допускает задержки. В публичных репозиториях расписания могут отключаться после 60 дней отсутствия активности. Постоянный сервер для этой реализации не требуется.
+In Settings → Secrets and variables → Actions add:
 
-## Расчёт
+- TELEGRAM_BOT_TOKEN: BotFather token.
+- TELEGRAM_CHAT_ID: destination chat ID.
+- BOT_CONFIG_JSON: full contents of config.json from the supplied project archive. This contains private purchase costs and target profits. Keep it in Secrets.
 
-Полная себестоимость = закупка + 25 ₽. Комиссии продажи 10% и 20% рассчитываются отдельно. Вывод 6%, минимум 60 ₽. withdrawal_batch задаёт число одинаковых продаж в одном выводе. По умолчанию 1, поэтому дешёвые Gemini рассчитываются с полными 60 ₽ за вывод.
+Open the Telegram bot and press Start. Then Actions → Hourly subscription prices → Run workflow.
 
-Целевой остаток задан в target_profit: Plus/Claude 200 ₽, Gemini Plus 30 ₽, Gemini Pro 50 ₽, GPT Pro 500 ₽. Это изменяемые предположения. Рекомендация — максимум между ценой для целевого остатка и нижней квартилью выборки минус 1 ₽. При единственном лоте рекомендация опирается только на него. Это эвристика, оптимальная конверсия продаж не проверена. Налоги, реклама и возвраты не включены.
+## Status and limitations
 
-GPT Pro 5× сравнивается с услугами активации на месяц, эквивалентность вашим CDK не подтверждена. Перед использованием подтвердите срок и условия у поставщика. Ссылки конкурентов проверялись поиском при подготовке и могут устареть. Редактируйте urls в config.json для замены лотов.
+Live price retrieval and delivery have not yet been verified. Playerok previously showed DDoS-Guard. The collector reads a single in-stock RUB Product from JSON-LD on each configured listing. Blocked or unsupported pages produce an explicit error. Previously collected prices retain their timestamp and are excluded from fresh recommendations. No anti-bot bypass is implemented.
 
-## Доступ к данным
+The sample covers configured listings only, not the whole marketplace. It measures asking prices, not completed sales. Recommended price is the larger of the configured profit floor and lower quartile minus one ruble. Taxes, promotions and refunds are excluded. Withdrawal uses the configured minimum fee and batch size. Confirm equivalence of supplier products and competitor offers before pricing.
 
-Playerok при предыдущей проверке показывал DDoS-Guard. Работа HTTP-сбора на будущем сервере не подтверждена. Парсер принимает только однозначный Product JSON-LD с InStock и RUB. При блокировке, удалении лота или неподдерживаемой разметке сообщает ошибку и дату последней успешной проверки. Старые цены не участвуют в новой рекомендации. Обход защиты не реализован. Если сайт блокирует сервер, для полноценной автоматизации потребуется разрешённый Playerok источник данных или предоставленный площадкой API.
-
-История последнего успешного снимка сохраняется в state.json и GitHub Actions cache. Кэш может быть удалён хостингом. Передача в Telegram проверяется, секрет не выводится в сообщениях об ошибках. Повторный ручной запуск может повторно отправить отчёт.
-
-Локальный запуск: Python 3.12, `pip install -r requirements.txt`, переменные TELEGRAM_BOT_TOKEN и TELEGRAM_CHAT_ID, затем `python bot.py`. Тесты: `python -m unittest -v`.
+GitHub cache stores the last successful snapshot and may be evicted. Public repository schedules may be disabled after 60 days without activity. Tokens and private settings belong in Secrets, never in tracked files.
